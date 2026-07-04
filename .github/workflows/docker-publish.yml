@@ -2,22 +2,23 @@ name: Build and Push to GHCR
 
 on:
   push:
-    branches: [ "main" ] # Triggers the build whenever you push to main
-  workflow_dispatch: # Allows you to trigger the build manually from the UI
+    branches: [ "main" ]
+    paths-ignore:
+      - 'README.md'
+      - 'LICENSE'
+      - '.gitignore'
+  workflow_dispatch: 
 
 jobs:
   build-and-push:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04-arm 
     permissions:
       contents: read
-      packages: write # Needed to push to GHCR
+      packages: write 
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
-
-      - name: Set up QEMU (for ARM builds)
-        uses: docker/setup-qemu-action@v3
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
@@ -33,7 +34,9 @@ jobs:
         uses: docker/build-push-action@v5
         with:
           context: .
-          file: ./Dockerfile # Change to ./Dockerfile.generic if you aren't on Oracle Ampere
+          file: ./Dockerfile 
           platforms: linux/arm64
           push: true
           tags: ghcr.io/${{ github.repository_owner }}/cs2-arm-server:latest
+          cache-from: type=gha,scope=cs2-arm-server
+          cache-to: type=gha,scope=cs2-arm-server,mode=max
